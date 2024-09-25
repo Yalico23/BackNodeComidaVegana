@@ -1,0 +1,36 @@
+npm install sharp
+
+
+import sharp from 'sharp';
+
+const subirArchivo = (req, res, next) => {
+    upload(req, res, async function (error) {
+        if (error) {
+            return res.status(400).json({ mensaje: error.message });
+        }
+        
+        // Si se subió una imagen
+        if (req.file) {
+            try {
+                const inputPath = path.join(uploadPath, req.file.filename);
+                const outputPath = path.join(uploadPath, `processed_${req.file.filename}`);
+
+                // Aplicar filtros y procesar la imagen
+                await sharp(inputPath)
+                    .resize(800, 800) // Redimensionar la imagen a 800x800 píxeles
+                    .grayscale()     // Convertir la imagen a escala de grises
+                    .toFile(outputPath);
+
+                // Reemplazar el archivo original con el procesado
+                fs.unlinkSync(inputPath); // Eliminar el archivo original
+                req.file.filename = `processed_${req.file.filename}`; // Actualizar el nombre del archivo
+
+            } catch (err) {
+                console.error('Error procesando la imagen:', err);
+                return res.status(500).json({ mensaje: "Error al procesar la imagen" });
+            }
+        }
+
+        next();
+    });
+};
